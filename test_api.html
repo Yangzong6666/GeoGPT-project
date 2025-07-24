@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoGPT API 连接测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .config-section {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .config-item {
+            margin-bottom: 1rem;
+        }
+        
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #555;
+        }
+        
+        input[type="text"], input[type="url"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        
+        input[type="text"]:focus, input[type="url"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        
+        button {
+            flex: 1;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .test-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .test-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .test-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .clear-btn {
+            background: #f1f3f4;
+            color: #555;
+        }
+        
+        .clear-btn:hover {
+            background: #e8eaed;
+        }
+        
+        .result-section {
+            margin-top: 2rem;
+            padding: 1rem;
+            border-radius: 8px;
+            min-height: 100px;
+        }
+        
+        .result-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .result-error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .result-info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        
+        pre {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            white-space: pre-wrap;
+        }
+        
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #6c757d;
+        }
+        
+        .status-indicator.connecting {
+            background: #ffc107;
+            animation: pulse 1s infinite;
+        }
+        
+        .status-indicator.connected {
+            background: #28a745;
+        }
+        
+        .status-indicator.error {
+            background: #dc3545;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌍 GeoGPT API 连接测试</h1>
+        
+        <div class="config-section">
+            <h3>API 配置</h3>
+            <div class="config-item">
+                <label for="baseUrl">API 基础地址:</label>
+                <input type="url" id="baseUrl" value="https://geogpt.zero2x.org.cn/api/v1" placeholder="https://geogpt.zero2x.org.cn/api/v1">
+            </div>
+            <div class="config-item">
+                <label for="apiKey">API 密钥:</label>
+                <input type="text" id="apiKey" value="sk-z75090H521z8f37O3973" placeholder="sk-z75090H521z8f37O3973">
+            </div>
+            <div class="config-item">
+                <label for="apiName">API 名称:</label>
+                <input type="text" id="apiName" value="CUG_key_first" placeholder="CUG_key_first">
+            </div>
+            <div class="config-item">
+                <label for="model">模型名称:</label>
+                <input type="text" id="model" value="geogpt-base" placeholder="geogpt-base">
+            </div>
+        </div>
+        
+        <div class="button-group">
+            <button class="test-btn" id="testBtn" onclick="testConnection()">🔗 测试连接</button>
+            <button class="clear-btn" onclick="clearResults()">🗑️ 清空结果</button>
+        </div>
+        
+        <div class="status">
+            <div class="status-indicator" id="statusIndicator"></div>
+            <span id="statusText">等待测试...</span>
+        </div>
+        
+        <div class="result-section" id="resultSection" style="display: none;">
+            <h4>测试结果:</h4>
+            <pre id="resultContent"></pre>
+        </div>
+    </div>
+
+    <script>
+        let isTestingInProgress = false;
+
+        function updateStatus(text, type) {
+            const indicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+            
+            indicator.className = `status-indicator ${type}`;
+            statusText.textContent = text;
+        }
+
+        function showResult(content, type) {
+            const resultSection = document.getElementById('resultSection');
+            const resultContent = document.getElementById('resultContent');
+            
+            resultSection.style.display = 'block';
+            resultSection.className = `result-section result-${type}`;
+            resultContent.textContent = content;
+        }
+
+        function clearResults() {
+            const resultSection = document.getElementById('resultSection');
+            resultSection.style.display = 'none';
+            updateStatus('等待测试...', '');
+        }
+
+        async function testConnection() {
+            if (isTestingInProgress) return;
+            
+            isTestingInProgress = true;
+            const testBtn = document.getElementById('testBtn');
+            testBtn.disabled = true;
+            testBtn.textContent = '🔄 测试中...';
+            
+            try {
+                updateStatus('正在连接...', 'connecting');
+                
+                const baseUrl = document.getElementById('baseUrl').value.trim();
+                const apiKey = document.getElementById('apiKey').value.trim();
+                const apiName = document.getElementById('apiName').value.trim();
+                const model = document.getElementById('model').value.trim();
+                
+                if (!baseUrl || !apiKey || !apiName || !model) {
+                    throw new Error('请填写完整的API配置信息');
+                }
+                
+                const testData = {
+                    url: `${baseUrl}/chat/completions`,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`,
+                        'X-API-Name': apiName
+                    },
+                    body: {
+                        model: model,
+                        messages: [
+                            {
+                                role: 'user',
+                                content: '你好，请简短回复'
+                            }
+                        ],
+                        max_tokens: 50,
+                        temperature: 0.1
+                    }
+                };
+                
+                console.log('发送测试请求:', testData);
+                
+                const response = await fetch(testData.url, {
+                    method: 'POST',
+                    headers: testData.headers,
+                    body: JSON.stringify(testData.body),
+                    signal: AbortSignal.timeout(15000)
+                });
+                
+                const responseText = await response.text();
+                
+                let result = {
+                    success: response.ok,
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries()),
+                    body: responseText
+                };
+                
+                if (response.ok) {
+                    try {
+                        const jsonData = JSON.parse(responseText);
+                        result.parsedBody = jsonData;
+                        
+                        updateStatus('连接成功！', 'connected');
+                        showResult(`✅ API连接测试成功！
+
+📊 响应信息:
+状态码: ${response.status}
+响应时间: ${new Date().toLocaleTimeString()}
+
+📝 API响应内容:
+${JSON.stringify(jsonData, null, 2)}
+
+🔧 请求配置:
+URL: ${testData.url}
+模型: ${model}
+API名称: ${apiName}`, 'success');
+                        
+                    } catch (parseError) {
+                        updateStatus('响应格式异常', 'error');
+                        showResult(`⚠️ API连接成功，但响应格式不是有效的JSON:
+
+状态码: ${response.status}
+原始响应: ${responseText}`, 'error');
+                    }
+                } else {
+                    updateStatus('连接失败', 'error');
+                    let errorMsg = `❌ API连接失败
+
+🔍 错误详情:
+状态码: ${response.status} ${response.statusText}
+请求URL: ${testData.url}
+
+📋 可能的解决方案:`;
+                    
+                    if (response.status === 401) {
+                        errorMsg += `
+- 检查API密钥是否正确
+- 验证API名称是否有效
+- 确认账户是否有访问权限`;
+                    } else if (response.status === 404) {
+                        errorMsg += `
+- 检查API基础地址是否正确
+- 确认接口端点是否存在
+- 验证API版本是否匹配`;
+                    } else if (response.status === 429) {
+                        errorMsg += `
+- API调用频率过高，请稍后重试
+- 检查账户配额是否用完`;
+                    } else {
+                        errorMsg += `
+- 检查网络连接
+- 确认API服务是否正常
+- 联系API服务提供商`;
+                    }
+                    
+                    if (responseText) {
+                        errorMsg += `\n\n🔍 服务器响应: ${responseText}`;
+                    }
+                    
+                    showResult(errorMsg, 'error');
+                }
+                
+            } catch (error) {
+                updateStatus('测试失败', 'error');
+                
+                let errorMsg = `💥 连接测试失败
+
+🚨 错误信息: ${error.message}
+
+🔧 可能的原因:`;
+                
+                if (error.name === 'AbortError') {
+                    errorMsg += `
+- 请求超时（超过15秒）
+- 网络连接缓慢
+- API服务响应慢`;
+                } else if (error.message.includes('Failed to fetch')) {
+                    errorMsg += `
+- 网络连接问题
+- CORS跨域限制
+- API地址无法访问
+- 防火墙阻止`;
+                } else {
+                    errorMsg += `
+- 配置信息不完整
+- API格式不兼容
+- 其他未知错误`;
+                }
+                
+                errorMsg += `\n\n💡 建议:
+1. 检查网络连接是否正常
+2. 确认API配置信息是否准确
+3. 尝试使用浏览器直接访问API地址
+4. 联系API服务提供商确认服务状态`;
+                
+                showResult(errorMsg, 'error');
+                console.error('API测试错误:', error);
+            } finally {
+                isTestingInProgress = false;
+                testBtn.disabled = false;
+                testBtn.textContent = '🔗 测试连接';
+            }
+        }
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('GeoGPT API 测试页面已加载');
+        });
+    </script>
+</body>
+</html>

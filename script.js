@@ -1,11 +1,11 @@
 // GeoGPT API 配置
 const API_CONFIG = {
-    // 请根据实际的GeoGPT API文档修改以下配置
-    baseUrl: 'https://api.geogpt.com/v1', // 请替换为实际的API地址
+    // 根据GeoGPT平台的实际情况配置
+    baseUrl: 'https://geogpt.zero2x.org.cn/api/v1', // 基于提供的文档链接推断
     apiKey: 'sk-z75090H521z8f37O3973',
     apiName: 'CUG_key_first',
     // 可能的其他配置选项
-    model: 'gpt-3.5-turbo', // 默认模型，可在设置中修改
+    model: 'geogpt-base', // GeoGPT默认模型
     timeout: 30000 // 30秒超时
 };
 
@@ -144,16 +144,69 @@ async function testApiConnection() {
     try {
         updateStatus('连接中...', 'connecting');
         
-        // 模拟API连接测试
-        // 实际使用时可以发送一个简单的测试请求
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        updateStatus('已连接', 'connected');
-        console.log('API连接测试完成');
+        // 发送一个真实的测试请求
+        const testMessage = '你好';
+        const response = await fetch(`${API_CONFIG.baseUrl}/chat/completions`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${API_CONFIG.apiKey}`,
+                'X-API-Name': API_CONFIG.apiName
+            },
+            body: JSON.stringify({
+                model: API_CONFIG.model,
+                messages: [
+                    {
+                        role: 'user',
+                        content: testMessage
+                    }
+                ],
+                max_tokens: 10,
+                temperature: 0.1
+            }),
+            signal: AbortSignal.timeout(10000) // 10秒超时
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log('API连接测试成功:', data);
+            updateStatus('已连接', 'connected');
+            
+            // 显示连接成功的详细信息
+            console.log('GeoGPT API配置验证成功:', {
+                endpoint: `${API_CONFIG.baseUrl}/chat/completions`,
+                model: API_CONFIG.model,
+                apiName: API_CONFIG.apiName,
+                responseReceived: true
+            });
+        } else {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
         
     } catch (error) {
         console.error('API连接测试失败:', error);
         updateStatus('连接失败', 'error');
+        
+        // 提供更详细的错误信息
+        let errorMessage = '连接失败: ';
+        if (error.name === 'AbortError') {
+            errorMessage += '请求超时';
+        } else if (error.message.includes('Failed to fetch')) {
+            errorMessage += '网络错误，请检查API地址和网络连接';
+        } else if (error.message.includes('401')) {
+            errorMessage += 'API密钥验证失败';
+        } else if (error.message.includes('404')) {
+            errorMessage += 'API端点不存在，请检查baseUrl配置';
+        } else {
+            errorMessage += error.message;
+        }
+        
+        console.error('详细错误信息:', {
+            endpoint: `${API_CONFIG.baseUrl}/chat/completions`,
+            apiKey: API_CONFIG.apiKey.substring(0, 10) + '...',
+            apiName: API_CONFIG.apiName,
+            error: errorMessage
+        });
     }
 }
 
@@ -246,7 +299,9 @@ async function callGeoGPTAPI(message) {
             url: `${API_CONFIG.baseUrl}/chat/completions`,
             method: 'POST',
             headers: Object.keys(headers),
-            bodyKeys: Object.keys(requestBody)
+            bodyKeys: Object.keys(requestBody),
+            model: requestBody.model,
+            messageCount: requestBody.messages.length
         });
 
         const response = await fetch(`${API_CONFIG.baseUrl}/chat/completions`, {

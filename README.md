@@ -18,6 +18,7 @@
 ├── index.html          # 主页面
 ├── styles.css          # 样式文件
 ├── script.js           # 核心JavaScript逻辑
+├── test_api.html       # API连接测试页面
 ├── API_CONFIG.md       # API配置说明
 └── README.md          # 项目说明
 ```
@@ -28,23 +29,31 @@
 
 将所有文件下载到本地目录。
 
-### 2. 配置API
+### 2. 测试API连接
 
-根据您的GeoGPT API信息，修改 `script.js` 文件中的配置：
+在配置之前，建议先测试API连接：
+
+1. 在浏览器中打开 `test_api.html`
+2. 输入您的API配置信息
+3. 点击"测试连接"按钮验证配置
+
+### 3. 配置API
+
+根据测试结果，修改 `script.js` 文件中的配置：
 
 ```javascript
 const API_CONFIG = {
-    baseUrl: '您的API地址',              // 替换为实际的API地址
+    baseUrl: 'https://geogpt.zero2x.org.cn/api/v1', // 根据官方文档推断
     apiKey: 'sk-z75090H521z8f37O3973',    // 您提供的API密钥
     apiName: 'CUG_key_first',            // 您提供的API名称
-    model: 'gpt-3.5-turbo',              // 根据实际情况调整
+    model: 'geogpt-base',                // GeoGPT默认模型
     timeout: 30000
 };
 ```
 
 详细配置说明请参考 [API_CONFIG.md](./API_CONFIG.md)
 
-### 3. 运行网站
+### 4. 运行网站
 
 #### 方法1：直接打开文件
 双击 `index.html` 文件在浏览器中打开。

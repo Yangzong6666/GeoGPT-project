@@ -6,17 +6,26 @@
 
 ## 当前配置
 
-根据您提供的信息，当前配置如下：
+根据您提供的信息和官方文档链接，当前配置如下：
 
 ```javascript
 const API_CONFIG = {
-    baseUrl: 'https://api.geogpt.com/v1', // 需要替换为实际的API地址
+    baseUrl: 'https://geogpt.zero2x.org.cn/api/v1', // 基于官方文档链接推断
     apiKey: 'sk-z75090H521z8f37O3973',
     apiName: 'CUG_key_first',
-    model: 'gpt-3.5-turbo',
+    model: 'geogpt-base', // GeoGPT默认模型
     timeout: 30000
 };
 ```
+
+## 快速测试
+
+我们提供了一个专门的API测试页面，可以快速验证您的API配置：
+
+1. 在浏览器中打开 `test_api.html`
+2. 根据实际情况调整API配置参数
+3. 点击"测试连接"按钮
+4. 查看详细的测试结果和错误诊断
 
 ## 配置步骤
 
