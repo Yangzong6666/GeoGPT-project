@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>GeoGPT API 测试工具</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; background: #f0f2f5; }
+        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #333; text-align: center; margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        input, textarea { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px; font-size: 14px; }
+        input:focus, textarea:focus { border-color: #4CAF50; outline: none; }
+        button { background: #4CAF50; color: white; padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; margin: 10px 5px; font-size: 16px; }
+        button:hover { background: #45a049; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .status { padding: 15px; margin: 20px 0; border-radius: 5px; font-weight: bold; }
+        .status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .status.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .status.info { background: #cce6ff; color: #004085; border: 1px solid #99ccff; }
+        .result { background: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #007bff; white-space: pre-wrap; font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto; margin-top: 20px; display: none; }
+        .result.show { display: block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌍 GeoGPT API 测试工具</h1>
+        
+        <div class="form-group">
+            <label>API 地址:</label>
+            <input type="text" id="apiUrl" value="https://geogpt.zero2x.org.cn/api/v1/chat/completions">
+        </div>
+        
+        <div class="form-group">
+            <label>API 密钥:</label>
+            <input type="text" id="apiKey" value="sk-z75090H521z8f37O3973">
+        </div>
+        
+        <div class="form-group">
+            <label>API 名称:</label>
+            <input type="text" id="apiName" value="CUG_key_first">
+        </div>
+        
+        <div class="form-group">
+            <label>模型名称:</label>
+            <input type="text" id="modelName" value="geogpt-base">
+        </div>
+        
+        <div class="form-group">
+            <label>测试消息:</label>
+            <textarea id="testMessage" rows="3" placeholder="输入测试消息">你好，请简短介绍一下自己</textarea>
+        </div>
+        
+        <div style="text-align: center;">
+            <button onclick="testAPI()" id="testBtn">🔗 测试连接</button>
+            <button onclick="clearResult()">🗑️ 清空结果</button>
+            <button onclick="copyConfig()">📋 复制配置</button>
+        </div>
+        
+        <div id="status" class="status info">等待测试...</div>
+        <div id="result" class="result"></div>
+        
+        <div style="margin-top: 30px; padding: 15px; background: #e7f3ff; border-radius: 5px;">
+            <h3>💡 使用说明</h3>
+            <ul>
+                <li>点击"测试连接"验证API配置</li>
+                <li>成功后可复制配置用于主聊天界面</li>
+                <li>如有问题请检查网络连接和API信息</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let testing = false;
+
+        function updateStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+        }
+
+        function showResult(content) {
+            const result = document.getElementById('result');
+            result.textContent = content;
+            result.classList.add('show');
+        }
+
+        function clearResult() {
+            const result = document.getElementById('result');
+            result.classList.remove('show');
+            updateStatus('等待测试...', 'info');
+        }
+
+        function copyConfig() {
+            const config = `const API_CONFIG = {
+    baseUrl: '${document.getElementById('apiUrl').value.replace('/chat/completions', '')}',
+    apiKey: '${document.getElementById('apiKey').value}',
+    apiName: '${document.getElementById('apiName').value}',
+    model: '${document.getElementById('modelName').value}',
+    timeout: 30000
+};`;
+            
+            navigator.clipboard.writeText(config).then(() => {
+                alert('配置已复制到剪贴板！');
+            }).catch(() => {
+                showResult('配置代码：\n\n' + config);
+            });
+        }
+
+        async function testAPI() {
+            if (testing) return;
+            
+            testing = true;
+            const btn = document.getElementById('testBtn');
+            btn.disabled = true;
+            btn.textContent = '🔄 测试中...';
+            
+            try {
+                updateStatus('正在连接 GeoGPT API...', 'info');
+                
+                const apiUrl = document.getElementById('apiUrl').value.trim();
+                const apiKey = document.getElementById('apiKey').value.trim();
+                const apiName = document.getElementById('apiName').value.trim();
+                const modelName = document.getElementById('modelName').value.trim();
+                const testMessage = document.getElementById('testMessage').value.trim();
+                
+                if (!apiUrl || !apiKey || !apiName || !modelName || !testMessage) {
+                    throw new Error('请填写完整信息');
+                }
+                
+                const requestData = {
+                    model: modelName,
+                    messages: [{ role: 'user', content: testMessage }],
+                    max_tokens: 100,
+                    temperature: 0.1
+                };
+                
+                console.log('发送请求:', { url: apiUrl, data: requestData });
+                
+                const startTime = Date.now();
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`,
+                        'X-API-Name': apiName
+                    },
+                    body: JSON.stringify(requestData),
+                    signal: AbortSignal.timeout(20000)
+                });
+                
+                const responseTime = Date.now() - startTime;
+                const responseText = await response.text();
+                
+                console.log('响应:', { status: response.status, text: responseText });
+                
+                if (response.ok) {
+                    try {
+                        const data = JSON.parse(responseText);
+                        updateStatus('✅ 连接成功！', 'success');
+                        
+                        const result = `🎉 GeoGPT API 测试成功！
+
+⏱️ 响应时间: ${responseTime}ms
+📊 状态码: ${response.status}
+🌐 请求地址: ${apiUrl}
+🤖 模型: ${modelName}
+
+📝 API 响应:
+${JSON.stringify(data, null, 2)}
+
+✅ 配置验证通过！可以在聊天界面使用此配置。
+
+💡 提示: 点击"复制配置"获取代码用于更新 script.js 文件。`;
+                        
+                        showResult(result);
+                    } catch (e) {
+                        updateStatus('⚠️ 响应格式异常', 'error');
+                        showResult(`API连接成功但响应格式不是JSON：\n\n${responseText}`);
+                    }
+                } else {
+                    updateStatus('❌ 连接失败', 'error');
+                    
+                    let errorMsg = `连接失败！
+
+状态码: ${response.status} ${response.statusText}
+响应时间: ${responseTime}ms
+
+`;
+                    
+                    if (response.status === 401) {
+                        errorMsg += '❗ 认证失败 - 请检查API密钥和API名称';
+                    } else if (response.status === 404) {
+                        errorMsg += '❗ 接口不存在 - 请检查API地址';
+                    } else if (response.status === 429) {
+                        errorMsg += '❗ 请求频率过高 - 请稍后重试';
+                    } else {
+                        errorMsg += '❗ 其他错误 - 请检查网络和配置';
+                    }
+                    
+                    if (responseText) {
+                        errorMsg += `\n\n服务器响应:\n${responseText}`;
+                    }
+                    
+                    showResult(errorMsg);
+                }
+                
+            } catch (error) {
+                updateStatus('💥 测试失败', 'error');
+                
+                let errorMsg = `测试失败: ${error.message}\n\n`;
+                
+                if (error.name === 'AbortError') {
+                    errorMsg += '请求超时 - 请检查网络连接';
+                } else if (error.message.includes('Failed to fetch')) {
+                    errorMsg += '网络错误 - 无法连接到API服务器';
+                } else {
+                    errorMsg += '未知错误 - 请检查配置信息';
+                }
+                
+                errorMsg += '\n\n💡 解决建议:\n1. 检查网络连接\n2. 确认API地址正确\n3. 验证API密钥有效\n4. 联系服务提供商';
+                
+                showResult(errorMsg);
+                console.error('测试失败:', error);
+            } finally {
+                testing = false;
+                btn.disabled = false;
+                btn.textContent = '🔗 测试连接';
+            }
+        }
+
+        // 页面加载完成
+        console.log('GeoGPT API 测试工具已加载');
+    </script>
+</body>
+</html>
